@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const {
   listContacts,
-  getContactById,
+  getById,
   addContact,
   removeContact,
-  updateContact
-} = require('../../models/contacts');
+  updateContact,
+  updateStatusContact
+} = require('../../controllers/contactsController');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -20,7 +21,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const contact = await getContactById(id);
+    const contact = await getById(id);
     if (contact) {
       res.status(200).json(contact);
     } else {
@@ -35,7 +36,7 @@ router.post('/', async (req, res, next) => {
   try {
     const { name, email, phone } = req.body;
     if (!name || !email || !phone) {
-      res.status(400).json({ message: 'missing required fields' });
+      res.status(400).json({ message: 'missing required name field' });
     } else {
       const newContact = await addContact({ name, email, phone });
       res.status(201).json(newContact);
@@ -50,7 +51,7 @@ router.delete('/:id', async (req, res, next) => {
     const { id } = req.params;
     const result = await removeContact(id);
     if (result) {
-      res.status(200).json({ message: 'contacto eliminado' });
+      res.status(200).json({ message: 'Contact deleted successfully' });
     } else {
       res.status(404).json({ message: 'Not found' });
     }
@@ -67,6 +68,25 @@ router.put('/:id', async (req, res, next) => {
       res.status(400).json({ message: 'missing fields' });
     } else {
       const updatedContact = await updateContact(id, { name, email, phone });
+      if (updatedContact) {
+        res.status(200).json(updatedContact);
+      } else {
+        res.status(404).json({ message: 'Not found' });
+      }
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:contactId/favorite', async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const { favorite } = req.body;
+    if (favorite === undefined) {
+      res.status(400).json({ message: 'missing field favorite' });
+    } else {
+      const updatedContact = await updateStatusContact(contactId, favorite);
       if (updatedContact) {
         res.status(200).json(updatedContact);
       } else {
